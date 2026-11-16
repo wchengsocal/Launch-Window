@@ -12,7 +12,7 @@ function report(){
   const bonus=failed?0:Math.round(M.bonus),eff=(!failed&&!M.sandbox&&base>0)?Math.round(Math.max(0,BUDGET-M.cost)/10):0,total=base+bonus+eff+objB+teamB;
   const tb=failed?0:Math.min(sc.gen,sc.down)*365*M.life/1000*(M.flyby?.01:1);
   let best=0;try{best=+localStorage.getItem("lw-best")||0;if(total>best)localStorage.setItem("lw-best",total)}catch(e){}
-  $("rKick").textContent=`Mission report · ${nm(d)} · ${S.preset?PRESETS[S.preset].name:"custom rocket"}`;
+  $("rKick").textContent=`Mission report · ${S.campaign?"Campaign":"Sandbox"} · ${nm(d)} · ${S.preset?PRESETS[S.preset].name:"custom rocket"} · ${{easy:"Easy",normal:"Normal",hard:"Hard"}[S.diff]||"Normal"}`;
   $("rScore").textContent=total+" pts";
   $("rRating").textContent=(failed?"Mission lost. Rework the design and try again.":total>=200?"Amazing!":total>=110?"Great job!":total>0?"Good effort.":"No science returned.");$("rBest").textContent=total>best&&best?`New personal best. Previous best: ${best} pts.`:best?`Personal best: ${best} pts.`:"";
   const row=(a,b)=>`<li><span>${a}</span><b>${b}</b></li>`;

@@ -5,7 +5,7 @@ function renderPanel(){
   const D=design(),d=DEST[S.dest],act=document.activeElement&&document.activeElement.id;let h="";
   document.querySelectorAll(".tab").forEach(t=>{t.setAttribute("aria-selected",String(t.dataset.tab===S.tab));const base={mission:"Mission",rocket:"Rocket",sc:"Spacecraft",set:"Settings"}[t.dataset.tab],ow={mission:"lead",rocket:"launch",sc:"sc"}[t.dataset.tab];t.title=base+(S.team.n>1&&ow?" · "+who(ow):"");t.querySelector("span").textContent=base});
   if(S.tab==="mission"){
-    h+=`<div class="pane">${teamHTML()}<h2>Destination</h2>`+Object.entries(DEST).map(([k,v])=>opt("dest",k,v.name,`${transit(v.days)} · leave Earth orbit ${v.dep.toFixed(2)} km/s, brake ${v.cap.toFixed(2)} km/s · gravity ${v.g} m/s² · sunlight ${v.flux.toLocaleString()} W/m² · ×${v.mult} science`,"radio",S.dest===k)).join("");
+    h+=`<div class="pane">${teamHTML()}<h2>Destination</h2>`+(S.campaign?`<p class="note">Campaign mode: this mission goes to Mars. Choose sandbox mode from the main menu to fly anywhere.</p>`:"")+Object.entries(DEST).map(([k,v])=>opt("dest",k,v.name,`${transit(v.days)} · leave Earth orbit ${v.dep.toFixed(2)} km/s, brake ${v.cap.toFixed(2)} km/s · gravity ${v.g} m/s² · sunlight ${v.flux.toLocaleString()} W/m² · ×${v.mult} science`,"radio",S.dest===k,S.campaign&&k!=="mars")).join("");
     h+=`<h2>Objective</h2>`+Object.entries(OBJ).filter(([k,o])=>o.dest.includes(S.dest)).map(([k,o])=>opt("obj",k,o.name,o.sub,"radio",S.obj===k)).join("");
     h+=`<h2>Requirements</h2><ul class="req">`+reqs(D.sc).map(([t,ok])=>`<li class="${ok?"ok":"no"}">${ok?"Met":"Not met"}: ${t}</li>`).join("")+`</ul>`;
     h+=`<h2>Mission type</h2>`+opt("type","flyby","Flyby","Fly past once. Cheap, but only about 30% of the science.","radio",S.type==="flyby")+opt("type","orbiter","Orbiter","Brake into orbit and study it for a year.","radio",S.type==="orbiter")+opt("type","lander","Orbiter + lander",`Adds a lander ($${LANDER.cost}M, about ${scDesign().lander||Math.round(LANDER.dry*Math.exp(d.land*1000/(320*G0))+(d.atm?300:0))} kg here). You fly the landing.`,"radio",S.type==="lander");
@@ -40,7 +40,7 @@ function renderPanel(){
       const sub=ok!==true?ok:`${i.mass} kg · ${i.w} W · ${i.data?(i.data>=1000?i.data/1000+" Gb/day":i.data+" Mb/day"):"no data"} · $${i.cost}M${i.sci?` · ${i.sci} pts`:""}${i.bonus&&i.bonus[S.dest]?` · ×${i.bonus[S.dest]} at ${nm(d)}`:""}`;
       return opt("inst",k,i.name,sub,"checkbox",on&&ok===true,ok!==true||full)}).join("")+`</div>`;
   }else{
-    h+=`<div class="pane"><h2>Rules</h2><label class="sand" for="sandbox"><input type="checkbox" id="sandbox" ${S.sandbox?"checked":""}> Sandbox mode (no budget cap)</label><label class="sand" for="autostage"><input type="checkbox" id="autostage" ${S.autoStage?"checked":""}> Stage automatically when a stage runs dry</label>`;
+    h+=`<div class="pane"><h2>Mode</h2><p>${S.campaign?"Campaign: a mission to Mars.":"Sandbox: any destination."}</p><div class="row2"><button type="button" data-act="menu">Back to main menu</button><button type="button" data-act="tut">Show tutorial again</button></div><h2>Rules</h2><label class="sand" for="sandbox"><input type="checkbox" id="sandbox" ${S.sandbox?"checked":""}> Sandbox mode (no budget cap)</label><label class="sand" for="autostage"><input type="checkbox" id="autostage" ${S.autoStage?"checked":""}> Stage automatically when a stage runs dry</label>`;
     h+=`<h2>Controls</h2><dl class="keys"><dt>Space</dt><dd>Launch, stage, hold to burn</dd><dt>A / D</dt><dd>Tilt west / east</dd><dt>W / S</dt><dd>Throttle up / down</dd><dt>Z / X</dt><dd>Full throttle / cut</dd><dt>T</dt><dd>SAS: hold angle or follow prograde</dd><dt>P</dt><dd>Autopilot</dd><dt>M</dt><dd>Orbit map</dd><dt>. and ,</dt><dd>Time warp faster / slower</dd><dt>V</dt><dd>Camera</dd><dt>Esc</dt><dd>Pause</dd></dl>`;
     h+=`<h2>About</h2><p>Launch Window was built by William Cheng at Torrey Pines High School for the 2026 NASA Space Apps Challenge (Space Mission Design Game). Planet data comes from NASA's NSSDCA fact sheets; communications figures come from JPL and the Deep Space Network; RTG figures come from NASA's MMRTG fact sheet. Released under the Apache 2.0 license. Uses three.js (MIT license) and the Share Tech Mono font (SIL Open Font License).</p><h2>Share a design</h2><p>Copy this code to send your design to a teammate. Paste a code and press Load to use theirs.</p><textarea id="code" aria-label="Design code">${btoa(JSON.stringify({d:S.dest,t:S.type,s:S.site,r:S.rocket,c:S.sc,o:S.obj,b:S.orbit,l:S.life,m:S.team}))}</textarea><div class="row2"><button type="button" data-act="copy">Copy code</button><button type="button" data-act="load">Load code</button></div><p id="codeMsg"></p></div>`;
   }
@@ -79,7 +79,7 @@ $("panel").addEventListener("change",e=>{
   const t=e.target,v=t.value;
   if(t.dataset.name!==undefined){S.team.names[+t.dataset.name]=v.trim().slice(0,16)||("Player "+(+t.dataset.name+1));return renderPanel()}
   if(t.name==="life"){S.life=+v;return renderPanel()}
-  if(t.id==="sandbox"){S.sandbox=t.checked;return renderPanel()}
+  if(t.id==="sandbox"){S.sandbox=t.checked;if(t.checked)S.campaign=false;return renderPanel()}
   if(t.id==="autostage"){S.autoStage=t.checked;return}
   if(t.dataset.stage!==undefined){const s=S.rocket.stages[+t.dataset.stage];s[t.dataset.f]=t.dataset.f==="eng"?v:+v;S.preset="";renderPanel();buildRocket();return}
   if(t.name==="inst"){const a=S.sc.inst;t.checked?a.includes(v)||a.push(v):a.splice(a.indexOf(v),1);return renderPanel()}
@@ -91,9 +91,11 @@ $("panel").addEventListener("change",e=>{
 $("panel").addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
   if(a==="team"){S.team.n=+b.dataset.v;return renderPanel()}
+  if(a==="menu"){return startIntro()}
+  if(a==="tut"){TUT.done={};return startTut("design",true)}
   if(a==="preset"){S.preset=b.dataset.v;S.rocket=clone(PRESETS[S.preset]);renderPanel();buildRocket()}
   if(a==="addStage"){S.rocket.stages.push({eng:"rl10",n:1,tank:25});S.preset="";renderPanel();buildRocket()}
   if(a==="rmStage"){S.rocket.stages.pop();S.preset="";renderPanel();buildRocket()}
   if(a==="copy"){const ta=$("code");try{navigator.clipboard.writeText(ta.value).then(()=>$("codeMsg").textContent="Copied.",()=>{ta.select();$("codeMsg").textContent="Selected. Press Ctrl+C or ⌘C to copy."})}catch(err){ta.select()}}
-  if(a==="load"){try{const o=JSON.parse(atob($("code").value.trim()));if(!DEST[o.d]||!o.r||!o.c)throw 0;S.dest=o.d;fixObj();S.type=o.t;S.site=o.s;S.rocket=o.r;S.sc=o.c;S.preset="";if(o.b&&ORBITS[o.b])S.orbit=o.b;if(LIFE[o.l])S.life=o.l;if(o.o&&OBJ[o.o]&&OBJ[o.o].dest.includes(S.dest))S.obj=o.o;if(o.m&&o.m.names)S.team=o.m;renderPanel();buildRocket();$("codeMsg").textContent="Design loaded."}catch(err){$("codeMsg").textContent="That code didn't work. Check it was copied whole."}}
+  if(a==="load"){try{const o=JSON.parse(atob($("code").value.trim()));if(!DEST[o.d]||!o.r||!o.c)throw 0;S.dest=S.campaign?"mars":o.d;fixObj();S.type=o.t;S.site=o.s;S.rocket=o.r;S.sc=o.c;S.preset="";if(o.b&&ORBITS[o.b])S.orbit=o.b;if(LIFE[o.l])S.life=o.l;if(o.o&&OBJ[o.o]&&OBJ[o.o].dest.includes(S.dest))S.obj=o.o;if(o.m&&o.m.names)S.team=o.m;renderPanel();buildRocket();$("codeMsg").textContent="Design loaded."}catch(err){$("codeMsg").textContent="That code didn't work. Check it was copied whole."}}
 });

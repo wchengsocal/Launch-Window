@@ -1,7 +1,7 @@
 "use strict";
 /* ================= state ================= */
 const clone=o=>JSON.parse(JSON.stringify(o));
-const S={dest:"mars",type:"orbiter",site:"cape",time:"auto",diff:"normal",sandbox:false,autoStage:false,tab:"mission",preset:"fh",obj:"water",orbit:"polar",life:2,team:{n:1,names:["William","Player 2","Player 3","Player 4"]},
+const S={dest:"mars",type:"orbiter",site:"cape",time:"auto",diff:"normal",sandbox:false,campaign:false,autoStage:false,tab:"mission",preset:"fh",obj:"water",orbit:"polar",life:2,team:{n:1,names:["William","Player 2","Player 3","Player 4"]},
   rocket:clone(PRESETS.fh),sc:{bus:"medium",prop:"chem",margin:.1,solar:"m",rtg:0,bat:"s",ant:"hga",inst:["cam","spec","radar"]}};
 
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
